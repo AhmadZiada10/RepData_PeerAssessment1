@@ -29,20 +29,34 @@ Questions to be answered:
 
 # Setting global option to turn warnings off
 
-```{r setup}
+
+```r
 knitr::opts_chunk$set(warning = FALSE, echo = TRUE)
 ```
 
 # Loading and preprocessing the data
-```{r load}
+
+```r
 library(ggplot2)
 
 data<-read.csv("./activity.csv")
 summary(data)
 ```
 
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
+
 # 1. What is mean total number of steps taken per day?
-```{r 1}
+
+```r
 totalStepsPerDay<-aggregate(data$steps, list(data$date), sum, na.rm = TRUE)
 cols<-c("Date", "Steps")
 names(totalStepsPerDay)<-cols
@@ -50,20 +64,33 @@ names(totalStepsPerDay)<-cols
 hist(totalStepsPerDay$Steps, xlab = "Steps", main = "Total # of steps taken per day")
 ```
 
+![plot of chunk 1](figure/1-1.png)
+
 Here's the mean of the total number of steps taken per day
-```{r}
+
+```r
 mean(totalStepsPerDay$Steps)
 ```
 
+```
+## [1] 9354.23
+```
+
 Here's the median of the total number of steps taken per day
-```{r}
+
+```r
 median(totalStepsPerDay$Steps)
+```
+
+```
+## [1] 10395
 ```
 
 # 2. What is the average daily activity pattern?
 
 Here's a time series plot of the 5-minute interval and averagne number of steps taken per day
-```{r 2}
+
+```r
 averageStepsPerDay<-aggregate(data$steps, list(data$interval), mean, na.rm = TRUE)
 cols<-c("Interval", "Steps")
 names(averageStepsPerDay)<-cols
@@ -72,9 +99,16 @@ plot(averageStepsPerDay$Interval,averageStepsPerDay$Steps, ylab = "Interval",
      xlab = "Steps", main = "Average daily pattern", type = "l")
 ```
 
+![plot of chunk 2](figure/2-1.png)
+
 Here's the 5-minute interval cotains maximum number of steps
-```{r }
+
+```r
 averageStepsPerDay[which.max(averageStepsPerDay$Steps), ]$Interval
+```
+
+```
+## [1] 835
 ```
 
 # 3. Imputing missing values
@@ -82,17 +116,24 @@ averageStepsPerDay[which.max(averageStepsPerDay$Steps), ]$Interval
 There are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
 
 Here's the total number of missing values in the dataset
-```{r 3}
+
+```r
 sum(is.na(data))
 ```
 
+```
+## [1] 2304
+```
+
 Here's the strategy for imputing the missing values which is mean for for the same 5-minute interval
-```{r }
+
+```r
 imputedSteps<-averageStepsPerDay$Steps[match(data$interval, averageStepsPerDay$Interval)]
 ```
 
 Here's the new dataset whcih has it's missing values imputed
-```{r }
+
+```r
 imputedData <- transform(data, steps = ifelse(is.na(data$steps), yes = imputedSteps, no = data$steps))
 imputedStepsPerDay<-aggregate(imputedData$steps, list(imputedData$date), sum)
 cols<-c("Date", "Steps")
@@ -100,25 +141,39 @@ names(imputedStepsPerDay)<-cols
 ```
 
 Here's a histogram of total number of steps per day.
-```{r }
+
+```r
 hist(imputedStepsPerDay$Steps, xlab = "Steps", main = "Total # of steps taken per day"
      , breaks = seq(0,25000,by=2500))
 ```
 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+
 Here's the mean of the total number of steps taken per day
-```{r}
+
+```r
 mean(imputedStepsPerDay$Steps)
 ```
 
+```
+## [1] 10766.19
+```
+
 Here's the median of the total number of steps taken per day
-```{r}
+
+```r
 median(imputedStepsPerDay$Steps)
+```
+
+```
+## [1] 10766.19
 ```
 
 # 4. Are there differences in activity patterns between weekdays and weekends?
 
 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
-```{r}
+
+```r
 imputedData$date<-as.Date(strptime(imputedData$date, "%Y-%m-%d"))
 imputedData$dayType<-sapply(imputedData$date, function(x){
     if(weekdays(x) == "Saturday" || weekdays(x) == "Sunday"){
@@ -131,8 +186,11 @@ imputedData$dayType<-sapply(imputedData$date, function(x){
 ```
 
 Here's a panel plot of the 5-minute interval and the average number of taken steps across all weekdays and weekends
-```{r}
+
+```r
 imputedWeekSteps<-aggregate(steps~interval + dayType, imputedData, FUN = mean, na.rm = TRUE)
 g<-ggplot(imputedWeekSteps, aes(x = interval, y = steps, color = dayType))
 g + geom_line() + facet_wrap(~dayType)
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
